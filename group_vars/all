@@ -1,0 +1,9 @@
+aws_access_key: <AWS_ACCESS_KEY>
+aws_secret_key: <AWS_SECRET_KEY>
+key_name: <EC2_KEYPAIR_ALIAS>
+aws_region: <AWS_REGION>
+vpc_id: <VPC_ID>
+subnet_id: <SUBNET_ID>
+ami_id: <AMI_ID>
+instance_type: <EC2_INSTANCE_TYPE>
+my_local_cidr_ip: <LOCAL_IP_CIDR>

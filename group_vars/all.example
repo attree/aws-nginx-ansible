@@ -1,0 +1,9 @@
+aws_access_key: <AWS_ACCESS_KEY>
+aws_secret_key: <AWS_SECRET_KEY>
+key_name: ansible
+aws_region: eu-west-2
+vpc_id: vpc-123ab45c
+subnet_id: subnet-a12b345c
+ami_id: ami-123a4567
+instance_type: t2.micro
+my_local_cidr_ip: 1.2.3.4/32

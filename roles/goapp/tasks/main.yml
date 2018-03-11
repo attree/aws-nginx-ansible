@@ -1,0 +1,20 @@
+- yum:
+    name: go
+    state: latest
+
+- copy:
+    src: app.go
+    dest: /usr/tmp/app.go
+    owner: ec2-user
+    group: ec2-user
+    mode: 0744
+
+- shell: cd /usr/bin/ && sudo go build -o /usr/bin/goapp /usr/tmp/app.go
+
+- copy:
+    src: init.sh
+    dest: /etc/init.d/goapp
+    owner: ec2-user
+    group: ec2-user
+    mode: 0755
+  notify: startgoapp

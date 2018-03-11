@@ -1,0 +1,16 @@
+- hosts: local
+  connection: local
+  roles:
+    - aws
+
+- hosts: nginx
+  user: ec2-user
+  become: true
+  roles:
+    - nginx
+
+- hosts: goapp
+  user: ec2-user
+  become: true
+  roles:
+    - goapp

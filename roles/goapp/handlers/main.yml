@@ -1,0 +1,4 @@
+- name: startgoapp
+  service:
+    name: goapp
+    state: started

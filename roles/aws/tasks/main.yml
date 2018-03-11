@@ -1,0 +1,124 @@
+- name: Nginx security group
+  connection: local
+  ec2_group:
+    name: Nginx
+    description: "Nginx Security Group"
+    region: "{{aws_region}}"
+    vpc_id: "{{vpc_id}}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: "{{my_local_cidr_ip}}"
+      - proto: all
+        group_name: Nginx
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+  register: firewall
+
+- name: GoApp security group
+  connection: local
+  ec2_group:
+    name: GoApp
+    description: "GoApp Security Group"
+    region: "{{aws_region}}"
+    vpc_id: "{{vpc_id}}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    rules:
+      - proto: tcp
+        from_port: 8484
+        to_port: 8484
+        group_name: Nginx
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: "{{my_local_cidr_ip}}"
+    rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+  register: GoAppSG
+
+- name: Create Nginx instance
+  connection: local
+  ec2:
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    key_name: "{{key_name}}"
+    region: "{{aws_region}}"
+    group_id: "{{firewall.group_id}}"
+    instance_type: "{{instance_type}}"
+    image: "{{ami_id}}"
+    wait: yes
+    vpc_subnet_id: "{{subnet_id}}"
+    assign_public_ip: yes
+    instance_tags:
+       Name: Nginx
+  register: ec2_nginx
+
+- name: Nginx host group addition
+  local_action: add_host hostname={{item.public_ip}} groupname=nginx
+  with_items: "{{ec2_nginx.instances}}"
+
+- name: Create Go App 1 instance
+  connection: local
+  ec2:
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    key_name: "{{key_name}}"
+    region: "{{aws_region}}"
+    group_id: "{{GoAppSG.group_id}}"
+    instance_type: "{{instance_type}}"
+    image: "{{ami_id}}"
+    vpc_subnet_id: "{{subnet_id}}"
+    private_ip: 172.31.0.50
+    wait: yes
+    assign_public_ip: yes
+    instance_tags:
+       Name: GoApp1
+  register: ec2_go1
+
+- name: Create Go App 2 instance
+  connection: local
+  ec2:
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    key_name: "{{key_name}}"
+    region: "{{aws_region}}"
+    group_id: "{{GoAppSG.group_id}}"
+    instance_type: "{{instance_type}}"
+    image: "{{ami_id}}"
+    vpc_subnet_id: "{{subnet_id}}"
+    private_ip: 172.31.0.51
+    wait: yes
+    assign_public_ip: yes
+    instance_tags:
+       Name: GoApp2
+  register: ec2_go2
+
+- name: Goapp host group addition
+  local_action: add_host hostname={{item.public_ip}} groupname=goapp
+  with_items: "{{ec2_go1.instances}}"
+
+- name: Goapp host2 group addition
+  local_action: add_host hostname={{item.public_ip}} groupname=goapp
+  with_items: "{{ec2_go2.instances}}"
+
+- name: Wait for Nginx instance to come up
+  wait_for: host={{item.public_dns_name}} port=22 delay=60 timeout=320 state=started
+  with_items: "{{ec2_nginx.instances}}"
+
+- name: Wait for GoApp instance1 to come up
+  wait_for: host={{item.public_ip}} port=22 delay=60 timeout=320 state=started
+  with_items: "{{ec2_go1.instances}}"
+
+- name: Wait for GoApp instance2 to come up
+  wait_for: host={{item.public_ip}} port=22 delay=60 timeout=320 state=started
+  with_items: "{{ec2_go2.instances}}"
