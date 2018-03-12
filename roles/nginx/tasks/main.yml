@@ -14,3 +14,7 @@
     src: load-balancer
     dest: /etc/nginx/conf.d/load-balancer.conf
   notify: restart nginx
+
+- service:
+    name: nginx
+    enabled: yes

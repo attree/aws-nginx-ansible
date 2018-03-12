@@ -18,3 +18,7 @@
     group: ec2-user
     mode: 0755
   notify: startgoapp
+
+- service:
+    name: goapp
+    enabled: yes
